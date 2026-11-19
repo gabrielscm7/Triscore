@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Não encontrado · {{ app_name }}{% endblock %}
+{% block content %}
+  <section class="empty-state standalone">
+    <p class="eyebrow">Erro 404</p>
+    <h1>Conteúdo não encontrado</h1>
+    <p>{{ message }}</p>
+    <a class="btn" href="/eventos">Voltar para as provas</a>
+  </section>
+{% endblock %}

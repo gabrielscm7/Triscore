@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Premiação · {{ app_name }}{% endblock %}
+{% block content %}
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Modo de apresentação</p>
+      <h1>Premiação</h1>
+      <p class="muted">Escolha a prova para abrir o pódio em tela cheia.</p>
+    </div>
+    <a class="btn btn-secondary" href="/eventos">Voltar às provas</a>
+  </div>
+
+  {% if events %}
+    <div class="event-list">
+      {% for item in events %}
+        <a class="event-card" href="/premiacao/{{ item.id }}">
+          <div class="event-card-main">
+            <div>
+              <h3>{{ item.name }}</h3>
+              <p class="muted">
+                {% if item.event_date %}{{ item.event_date|display_date }}{% else %}Data não definida{% endif %}
+                {% if item.location %} · {{ item.location }}{% endif %}
+              </p>
+            </div>
+            <span class="event-arrow" aria-hidden="true">→</span>
+          </div>
+          <div class="event-metrics">
+            <span><strong>{{ item.athlete_count }}</strong> atletas</span>
+            <span><strong>{{ item.category_count }}</strong> categorias</span>
+            <span><strong>{{ item.heat_count }}</strong> baterias</span>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h3>Nenhuma prova cadastrada</h3>
+      <p>Crie uma prova e lance os resultados antes de abrir a premiação.</p>
+      <a class="btn" href="/eventos">Ir para provas</a>
+    </div>
+  {% endif %}
+{% endblock %}

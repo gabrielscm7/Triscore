@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+data/*
+!data/.gitkeep
+backups/*
+!backups/.gitkeep
+exports/*
+!exports/.gitkeep
+.DS_Store
+.ruff_cache/
+dist/
+dados/
+build/
+*.tar.gz
+*.tar.gz.sha256

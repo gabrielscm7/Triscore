@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>{% block title %}{{ app_name }}{% endblock %}</title>
+  <link rel="icon" href="/static/img/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+  {% set environment = request.app.state.environment %}
+  {% if environment and environment.is_test %}
+    <div class="test-mode-banner" role="status">
+      <strong>MODO TESTE</strong>
+      <span>dados fictícios · {{ environment.db_path.name }}</span>
+    </div>
+  {% endif %}
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/eventos" aria-label="Triscore — início">
+        <img src="/static/img/logo.svg" alt="" width="38" height="38">
+        <span>
+          <strong>Triscore</strong>
+          <small>Resultados de triatlo</small>
+        </span>
+      </a>
+
+      {% if event %}
+        <div class="event-context">
+          <span class="event-context-label">Prova</span>
+          <strong>{{ event.name }}</strong>
+        </div>
+        <nav class="main-nav" aria-label="Navegação principal">
+          <a href="/eventos/{{ event.id }}/atletas" class="{{ 'active' if active == 'athletes' else '' }}">Atletas</a>
+          <a href="/eventos/{{ event.id }}/equipes" class="{{ 'active' if active == 'teams' else '' }}">Equipes</a>
+          <a href="/eventos/{{ event.id }}/categorias" class="{{ 'active' if active == 'categories' else '' }}">Categorias</a>
+          <a href="/eventos/{{ event.id }}/baterias" class="{{ 'active' if active == 'heats' else '' }}">Baterias</a>
+          <a href="/eventos/{{ event.id }}/sumula" class="{{ 'active' if active == 'results' else '' }}">Súmula</a>
+          <a href="/eventos/{{ event.id }}/classificacao" class="{{ 'active' if active == 'classification' else '' }}">Classificação</a>
+          <a href="/premiacao/{{ event.id }}" class="{{ 'active' if active == 'awards' else '' }}">Premiação</a>
+          <a href="/eventos/{{ event.id }}/configuracao" class="{{ 'active' if active == 'settings' else '' }}">Configuração</a>
+        </nav>
+      {% endif %}
+
+      <div class="topbar-actions">
+        <a class="nav-events {{ 'active' if active == 'backup' else '' }}" href="/backup">Backup</a>
+        <a class="nav-events {{ 'active' if active == 'events' else '' }}" href="/eventos">
+          {% if event %}Trocar prova{% else %}Provas{% endif %}
+        </a>
+        <form method="post" action="/encerrar"
+              onsubmit="return confirm('Encerrar o Triscore? O banco sera copiado para a pasta de backups antes de sair.');">
+          <button type="submit" class="btn btn-danger btn-small">Encerrar</button>
+        </form>
+      </div>
+    </div>
+  </header>
+
+  <div class="flash-stack" aria-live="polite">
+    {% if request.query_params.get('ok') %}
+      <div class="flash flash-ok">
+        <span>{{ request.query_params.get('ok') }}</span>
+        <button type="button" class="flash-close" aria-label="Fechar">×</button>
+      </div>
+    {% endif %}
+    {% if request.query_params.get('warning') %}
+      <div class="flash flash-warning">
+        <span>{{ request.query_params.get('warning') }}</span>
+        <button type="button" class="flash-close" aria-label="Fechar">×</button>
+      </div>
+    {% endif %}
+    {% if request.query_params.get('error') %}
+      <div class="flash flash-error" role="alert">
+        <span>{{ request.query_params.get('error') }}</span>
+        <button type="button" class="flash-close" aria-label="Fechar">×</button>
+      </div>
+    {% endif %}
+  </div>
+
+  <main class="page-shell {% block main_class %}{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <span>Triscore · operação local, sem conexão externa</span>
+    {% if event %}<span>{{ event.name }}{% if event.event_date %} · {{ event.event_date|display_date }}{% endif %}</span>{% endif %}
+  </footer>
+
+  <script src="/static/js/app.js" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

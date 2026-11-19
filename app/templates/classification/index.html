@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}Classificação · {{ event.name }}{% endblock %}
+{% block content %}
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Resultados da prova</p>
+      <h1>Classificação</h1>
+      <p class="muted">Grupos separados por Categoria + Sexo, combinando atletas de todas as baterias.</p>
+    </div>
+    <div class="stat-strip">
+      <span><strong>{{ stats.groups }}</strong> grupos</span>
+      <span><strong>{{ stats.finished }}</strong> classificados</span>
+      <span><strong>{{ stats.pending }}</strong> pendentes</span>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="classification-toolbar">
+      <div>
+        <p class="eyebrow">Critério de desempate</p>
+        <h2>Empates de tempo</h2>
+        <p class="form-note">Aplicado apenas quando dois atletas do mesmo grupo têm o mesmo tempo final. O critério fica salvo nesta prova.</p>
+      </div>
+      <form method="post" action="/eventos/{{ event.id }}/classificacao/desempate" class="classification-tiebreak">
+        <label>
+          <span>Desempatar por</span>
+          <select name="tiebreak" required>
+            {% for value, label in tiebreak_options.items() %}
+              <option value="{{ value }}" {% if tiebreak == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <button class="btn btn-small" type="submit">Aplicar</button>
+      </form>
+    </div>
+  </section>
+
+  {% if tie_warnings %}
+    <div class="inline-note classification-tie-warning" role="alert">
+      <strong>Atenção: empate dentro das três primeiras posições.</strong>
+      <ul class="message-list">
+        {% for warning in tie_warnings %}
+          <li>
+            {{ warning.category_name }} · {{ warning.sex_label }}:
+            {{ warning.count }} atletas com o tempo {{ warning.time }}
+            ({{ warning.names|join(', ') }}).
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="classification-actions">
+    <a class="btn btn-secondary" href="/eventos/{{ event.id }}/sumula">Lançar ou editar resultados</a>
+    <a class="btn btn-secondary" href="/eventos/{{ event.id }}/pdfs/relatorio-final">Exportar relatório final PDF</a>
+    <a class="btn" href="/premiacao/{{ event.id }}">Abrir premiação</a>
+  </div>
+
+  {% if groups %}
+    <div class="classification-groups">
+      {% for group in groups %}
+        <section class="panel classification-group">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">{{ group.sex_label }}</p>
+              <h2>{{ group.category_name }}</h2>
+              <p class="form-note">
+                {{ group.finished_count }} classificado(s) · {{ group.special_count }} status especial(is) · {{ group.pending_count }} pendente(s)
+              </p>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Pos.</th>
+                  <th>Peito</th>
+                  <th>Atleta</th>
+                  <th>Equipe</th>
+                  <th>Largada</th>
+                  <th>Tempo</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for athlete in group.athletes %}
+                  <tr class="{% if athlete.result_status and athlete.result_status != 'OK' %}classification-special{% elif not athlete.result_status %}classification-pending{% endif %}">
+                    <td>
+                      {% if athlete.position %}
+                        <strong class="classification-position">{{ athlete.position }}º</strong>
+                      {% else %}
+                        <span class="muted">—</span>
+                      {% endif %}
+                    </td>
+                    <td><span class="bib-badge">{{ athlete.bib }}</span></td>
+                    <td>
+                      <span class="athlete-name">{{ athlete.name }}</span>
+                      <span class="subline">{{ athlete.age }} anos</span>
+                    </td>
+                    <td>{{ athlete.team or 'Sem equipe' }}</td>
+                    <td>
+                      {% if athlete.heat_id %}
+                        <span class="badge badge-heat">{{ athlete.heat_label }}</span>
+                        <span class="subline">Posição {{ athlete.heat_position }}</span>
+                      {% else %}
+                        <span class="badge">Sem bateria</span>
+                      {% endif %}
+                    </td>
+                    <td class="mono">
+                      {% if athlete.result_status == 'OK' %}
+                        {{ athlete.formatted_time }}
+                      {% else %}
+                        —
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if athlete.result_status == 'OK' %}
+                        <span class="badge">Tempo válido</span>
+                      {% elif athlete.result_status %}
+                        <span class="badge badge-warn">{{ athlete.result_status }}</span>
+                      {% else %}
+                        <span class="badge">Sem resultado</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      {% endfor %}
+    </div>
+    <p class="form-note classification-note">Apenas atletas com tempo válido recebem posição. Status especiais e atletas sem resultado aparecem ao final do grupo.</p>
+  {% else %}
+    <div class="empty-state">
+      <h3>Nenhum atleta para classificar</h3>
+      <p>Cadastre atletas e lance os resultados para gerar a classificação.</p>
+      <div class="form-actions" style="justify-content: center;">
+        <a class="btn btn-secondary" href="/eventos/{{ event.id }}/atletas">Ir para atletas</a>
+        <a class="btn" href="/eventos/{{ event.id }}/sumula">Abrir súmula</a>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}

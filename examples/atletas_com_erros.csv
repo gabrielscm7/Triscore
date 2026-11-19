@@ -1,0 +1,10 @@
+nome;idade;categoria;equipe;sexo;peito
+Atleta Sem Idade;;Adulto 30-39;;F;401
+Idade Inválida;trinta;Adulto 30-39;;M;402
+Categoria Ausente;35;;;F;403
+Sexo Inválido;30;Adulto 30-39;;X;404
+Peito Repetido A;32;Adulto 30-39;;F;405
+Peito Repetido B;36;Adulto 30-39;;M;405
+Fora da Faixa;22;Adulto 30-39;;F;407
+Categoria Nova;44;Categoria Experimental;Equipe Inédita;M;408
+Equipe Longa;38;Adulto 30-39;EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE;F;409

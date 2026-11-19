@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Importar atletas · {{ event.name }}{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Importação local</p>
+      <h1>Importar atletas por CSV</h1>
+      <p class="muted">O arquivo é processado nesta máquina e só será gravado após a conferência da prévia.</p>
+    </div>
+    <a class="btn btn-secondary" href="/eventos/{{ event.id }}/atletas">Voltar</a>
+  </div>
+
+  <section class="panel">
+    <form method="post" action="/eventos/{{ event.id }}/atletas/importar/previa" enctype="multipart/form-data" class="form-stack">
+      <div class="upload-zone">
+        <label>
+          <span>Arquivo CSV (até 5 MB)</span>
+          <input type="file" name="file" accept=".csv,text/csv,text/plain" required>
+        </label>
+      </div>
+
+      <div class="import-summary">
+        <div class="metric-card">
+          <strong>Nome</strong>
+          <span>Obrigatório. Aceita também “atleta”.</span>
+        </div>
+        <div class="metric-card">
+          <strong>Idade</strong>
+          <span>Obrigatória, entre 1 e 120.</span>
+        </div>
+        <div class="metric-card">
+          <strong>Categoria</strong>
+          <span>Obrigatória. Categorias novas são criadas na confirmação.</span>
+        </div>
+        <div class="metric-card">
+          <strong>Sexo</strong>
+          <span>M/F, masculino/feminino.</span>
+        </div>
+        <div class="metric-card">
+          <strong>Equipe</strong>
+          <span>Opcional, até 120 caracteres. Equipes novas são criadas na confirmação.</span>
+        </div>
+        <div class="metric-card">
+          <strong>Peito</strong>
+          <span>Opcional. Em branco gera automaticamente.</span>
+        </div>
+      </div>
+
+      <p class="form-note">
+        Separadores vírgula, ponto e vírgula e tabulação são detectados automaticamente.
+        Cabeçalhos aceitos: nome, idade, categoria, equipe, sexo e peito (ou numero_peito).
+      </p>
+
+      <div class="form-actions">
+        <button class="btn" type="submit">Gerar prévia</button>
+        <a class="btn btn-secondary" href="/eventos/{{ event.id }}/atletas">Cancelar</a>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel" style="margin-top: 1rem;">
+    <h2>Formato de exemplo</h2>
+    <pre class="mono" style="margin: 0; overflow-x: auto; font-size: 0.78rem; color: var(--ink-soft);">nome;idade;categoria;equipe;sexo;peito
+Ana Souza;34;Standard 30-39;Equipe Azul;F;101
+Bruno Lima;29;Standard 25-29;Tri Clube;M;102
+Carla Mendes;41;Standard 40-49;Independente;F;</pre>
+    <p class="form-note" style="margin-top: 0.55rem;">O peito em branco na última linha será gerado automaticamente.</p>
+  </section>
+{% endblock %}

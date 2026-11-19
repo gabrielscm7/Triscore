@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Provas · {{ app_name }}{% endblock %}
+{% block content %}
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Operação local · prova contra o relógio</p>
+      <h1>Provas e resultados</h1>
+      <p class="hero-copy">Cadastre atletas, organize a ordem de largada e prepare cada bateria. Todos os dados ficam neste computador.</p>
+    </div>
+    <div class="hero-mark" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+  </section>
+
+  <div class="events-layout">
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Arquivo local</p>
+          <h2>Provas cadastradas</h2>
+        </div>
+        <span class="count-pill">{{ events|length }}</span>
+      </div>
+
+      {% if events %}
+        <div class="event-list">
+          {% for item in events %}
+            <a class="event-card" href="/eventos/{{ item.id }}/baterias">
+              <div class="event-card-main">
+                <div>
+                  <h3>{{ item.name }}</h3>
+                  <p class="muted">
+                    {% if item.event_date %}{{ item.event_date|display_date }}{% else %}Data não definida{% endif %}
+                    {% if item.location %} · {{ item.location }}{% endif %}
+                  </p>
+                </div>
+                <span class="event-arrow" aria-hidden="true">→</span>
+              </div>
+              <div class="event-metrics">
+                <span><strong>{{ item.athlete_count }}</strong> atletas</span>
+                <span><strong>{{ item.category_count }}</strong> categorias</span>
+                <span><strong>{{ item.heat_count }}</strong> baterias</span>
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <h3>Nenhuma prova cadastrada</h3>
+          <p>Crie a primeira prova ao lado para iniciar o cadastro de atletas.</p>
+        </div>
+      {% endif %}
+    </section>
+
+    <aside class="panel panel-accent sticky">
+      <p class="eyebrow">Nova operação</p>
+      <h2>Criar prova</h2>
+      <form method="post" action="/eventos" class="form-stack">
+        <label>
+          <span>Nome da prova</span>
+          <input type="text" name="name" required maxlength="160" autofocus placeholder="Ex.: Triatlo das Montanhas 2026">
+        </label>
+        <div class="form-row">
+          <label>
+            <span>Data</span>
+            <input type="date" name="event_date">
+          </label>
+          <label>
+            <span>Local</span>
+            <input type="text" name="location" maxlength="160" placeholder="Cidade / percurso">
+          </label>
+        </div>
+        <button class="btn btn-block" type="submit">Criar e configurar</button>
+      </form>
+      <p class="form-note">O banco de dados, os backups e todos os arquivos permanecem nesta máquina.</p>
+    </aside>
+  </div>
+{% endblock %}

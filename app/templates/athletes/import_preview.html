@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Prévia da importação · {{ event.name }}{% endblock %}
+{% block content %}
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Conferência de importação</p>
+      <h1>Prévia da importação</h1>
+      <p class="muted">{{ batch.filename }} · nenhum atleta, equipe ou categoria foi gravado ainda</p>
+    </div>
+    <a class="btn btn-secondary" href="/eventos/{{ event.id }}/atletas/importar">Enviar outro arquivo</a>
+  </div>
+
+  <div class="import-summary import-summary-4">
+    <div class="metric-card">
+      <strong>{{ counts.total }}</strong>
+      <span>linhas no arquivo</span>
+    </div>
+    <div class="metric-card metric-ok">
+      <strong>{{ counts.valid }}</strong>
+      <span>prontas para importar</span>
+    </div>
+    <div class="metric-card metric-warning">
+      <strong>{{ counts.warning }}</strong>
+      <span>com aviso, mas importáveis</span>
+    </div>
+    <div class="metric-card metric-error">
+      <strong>{{ counts.error }}</strong>
+      <span>com erro, serão ignoradas</span>
+    </div>
+  </div>
+
+  {% if counts.new_categories or counts.new_teams %}
+    <div class="panel" style="margin-bottom: 1rem;">
+      <p class="eyebrow">Criação automática na confirmação</p>
+      <h2>Serão criados</h2>
+      <div class="import-summary">
+        <div class="metric-card">
+          <strong>{{ counts.new_categories|length }}</strong>
+          <span>categoria(s) nova(s)</span>
+          {% if counts.new_categories %}
+            <ul class="message-list">
+              {% for name in counts.new_categories %}<li>{{ name }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+        <div class="metric-card">
+          <strong>{{ counts.new_teams|length }}</strong>
+          <span>equipe(s) nova(s)</span>
+          {% if counts.new_teams %}
+            <ul class="message-list">
+              {% for name in counts.new_teams %}<li>{{ name }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      </div>
+      <p class="form-note">Essas entidades só serão gravadas depois da confirmação. Linhas com erro não criam equipes nem categorias.</p>
+    </div>
+  {% endif %}
+
+  {% if counts.error %}
+    <p class="inline-note">
+      Corrija as linhas com erro no arquivo para importá-las, ou confirme para gravar somente as linhas válidas e com aviso.
+      O relatório completo também pode ser baixado em CSV.
+    </p>
+  {% endif %}
+
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Linha</th>
+          <th>Peito</th>
+          <th>Nome</th>
+          <th>Idade</th>
+          <th>Categoria</th>
+          <th>Sexo</th>
+          <th>Equipe</th>
+          <th>Conferência</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr class="{% if row.status == 'ERROR' %}import-row-error{% elif row.status == 'WARNING' %}import-row-warning{% endif %}">
+            <td class="mono">{{ row.row_number }}</td>
+            <td>{{ row["values"]["bib"] if row["values"]["bib"] else 'Automático' }}</td>
+            <td>{{ row["values"]["name"] if row["values"]["name"] else '—' }}</td>
+            <td>{{ row["values"]["age"] if row["values"]["age"] else '—' }}</td>
+            <td>{{ row["values"]["category"] if row["values"]["category"] else '—' }}</td>
+            <td>{{ row["values"]["sex"] if row["values"]["sex"] else '—' }}</td>
+            <td>{{ row["values"]["team"] if row["values"]["team"] else '—' }}</td>
+            <td>
+              {% if row.status == 'ERROR' %}
+                <span class="badge badge-danger">Erro</span>
+              {% elif row.status == 'WARNING' %}
+                <span class="badge badge-warn">Aviso</span>
+              {% else %}
+                <span class="badge">OK</span>
+              {% endif %}
+              {% if row.errors %}
+                <ul class="message-list" style="color: var(--danger);">
+                  {% for message in row.errors %}<li>{{ message }}</li>{% endfor %}
+                </ul>
+              {% endif %}
+              {% if row.warnings %}
+                <ul class="message-list" style="color: #825617;">
+                  {% for message in row.warnings %}<li>{{ message }}</li>{% endfor %}
+                </ul>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="import-actions">
+    <div class="actions">
+      {% if counts.error or counts.warning %}
+        <a class="btn btn-secondary" href="/eventos/{{ event.id }}/atletas/importar/{{ batch.id }}/erros.csv">Baixar relatório CSV</a>
+      {% endif %}
+      <form method="post" action="/eventos/{{ event.id }}/atletas/importar/{{ batch.id }}/cancelar">
+        <button class="btn btn-ghost-danger" type="submit" data-confirm="Descartar esta prévia? Nenhum atleta será importado.">Cancelar importação</button>
+      </form>
+    </div>
+    <form method="post" action="/eventos/{{ event.id }}/atletas/importar/{{ batch.id }}/confirmar">
+      <button class="btn" type="submit" {% if counts.valid + counts.warning == 0 %}disabled{% endif %}
+              data-confirm="Confirmar a importação? Serão gravados {{ counts.valid + counts.warning }} atleta(s), {{ counts.new_categories|length }} categoria(s) e {{ counts.new_teams|length }} equipe(s); linhas com erro serão ignoradas.">
+        Confirmar importação
+      </button>
+    </form>
+  </div>
+{% endblock %}

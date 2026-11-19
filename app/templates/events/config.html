@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Configuração · {{ event.name }}{% endblock %}
+{% block content %}
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Configuração da prova</p>
+      <h1>{{ event.name }}</h1>
+      <p class="muted">
+        {% if event.event_date %}{{ event.event_date|display_date }}{% else %}Data não definida{% endif %}
+        {% if event.location %} · {{ event.location }}{% endif %}
+      </p>
+    </div>
+    <div class="stat-strip">
+      <span><strong>{{ stats.categories }}</strong> categorias</span>
+      <span><strong>{{ stats.athletes }}</strong> atletas</span>
+      <span><strong>{{ stats.heats }}</strong> baterias</span>
+    </div>
+  </div>
+
+  <div class="settings-grid">
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Identificação</p>
+          <h2>Dados da prova</h2>
+        </div>
+      </div>
+      <form method="post" action="/eventos/{{ event.id }}/configuracao" class="form-stack">
+        <label>
+          <span>Nome da prova</span>
+          <input type="text" name="name" value="{{ event.name }}" required maxlength="160">
+        </label>
+        <div class="form-row">
+          <label>
+            <span>Data</span>
+            <input type="date" name="event_date" value="{{ event.event_date or '' }}">
+          </label>
+          <label>
+            <span>Local</span>
+            <input type="text" name="location" value="{{ event.location }}" maxlength="160">
+          </label>
+        </div>
+
+        <div class="section-divider">
+          <p class="eyebrow">Distribuição</p>
+          <h3>Limite de atletas por bateria</h3>
+        </div>
+        <label class="compact-label">
+          <span>Máximo por bateria</span>
+          <input type="number" name="heat_limit" value="{{ event.heat_limit }}" min="1" max="1000" required>
+        </label>
+        <p class="form-note">Grupos que ultrapassarem esse limite serão divididos em Bateria A, B, C e assim por diante.</p>
+
+        <div class="section-divider">
+          <p class="eyebrow">Cronograma opcional</p>
+          <h3>Horários previstos de largada</h3>
+        </div>
+        <label class="check-row">
+          <input type="checkbox" name="schedule_enabled" value="1" {% if event.schedule_enabled %}checked{% endif %}>
+          <span>Calcular e exibir horário previsto para cada atleta</span>
+        </label>
+        <div class="form-row form-row-3">
+          <label>
+            <span>Horário inicial</span>
+            <input type="time" name="schedule_start" value="{{ event.schedule_start }}">
+          </label>
+          <label>
+            <span>Intervalo entre atletas (s)</span>
+            <input type="number" name="athlete_interval_seconds" value="{{ event.athlete_interval_seconds }}" min="0" max="86400">
+          </label>
+          <label>
+            <span>Intervalo entre baterias (s)</span>
+            <input type="number" name="heat_interval_seconds" value="{{ event.heat_interval_seconds }}" min="0" max="86400">
+          </label>
+        </div>
+        <p class="form-note">O cronograma considera a ordem de largada de cada bateria. Nenhum tempo é cronometrado pelo sistema.</p>
+
+        <div class="form-actions">
+          <button class="btn" type="submit">Salvar configuração</button>
+          <a class="btn btn-secondary" href="/eventos/{{ event.id }}/atletas">Ir para atletas</a>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Grupos de prova</p>
+          <h2>Categorias</h2>
+        </div>
+      </div>
+      <p class="form-note category-intro">Cada categoria gera automaticamente os grupos de classificação Masculino e Feminino. A faixa etária é usada apenas para alertar sobre incoerências.</p>
+      <div class="metric-card">
+        <strong>{{ stats.categories }}</strong>
+        <span>categoria(s) cadastrada(s) nesta prova</span>
+      </div>
+      <div class="form-actions" style="margin-top: 1rem;">
+        <a class="btn" href="/eventos/{{ event.id }}/categorias">Gerenciar categorias</a>
+        <a class="btn btn-secondary" href="/eventos/{{ event.id }}/equipes">Gerenciar equipes</a>
+      </div>
+    </section>
+  </div>
+{% endblock %}

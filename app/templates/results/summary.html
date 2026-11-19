@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Súmula · {{ event.name }}{% endblock %}
+{% block content %}
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Lançamento de resultados</p>
+      <h1>Súmula</h1>
+      <p class="muted">Registre o tempo final ou um status especial. A classificação é atualizada a partir destes resultados.</p>
+    </div>
+    <div class="stat-strip">
+      <span><strong>{{ stats.total }}</strong> atletas</span>
+      <span><strong>{{ stats.entered }}</strong> lançados</span>
+      <span><strong>{{ stats.pending }}</strong> pendentes</span>
+    </div>
+  </div>
+
+  <div class="import-summary import-summary-4">
+    <div class="metric-card metric-ok">
+      <strong>{{ stats.ok }}</strong>
+      <span>com tempo válido</span>
+    </div>
+    <div class="metric-card">
+      <strong>{{ stats.dnf }}</strong>
+      <span>DNF — não finalizou</span>
+    </div>
+    <div class="metric-card metric-error">
+      <strong>{{ stats.dsq }}</strong>
+      <span>DSQ — desclassificado</span>
+    </div>
+    <div class="metric-card metric-warning">
+      <strong>{{ stats.dns }}</strong>
+      <span>DNS — não largou</span>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Resultados da prova</p>
+        <h2>Lançamento por atleta</h2>
+      </div>
+    </div>
+
+    <p class="form-note">
+      Tempos aceitos: <span class="mono">mm:ss</span>, <span class="mono">hh:mm:ss</span> ou o mesmo formato com centésimos
+      (<span class="mono">mm:ss.cc</span>, <span class="mono">hh:mm:ss.cc</span>). DNF, DSQ e DNS não utilizam tempo.
+      Cada alteração gera um backup automático em <span class="mono">backups/</span>.
+    </p>
+
+    {% if results %}
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Peito</th>
+              <th>Atleta</th>
+              <th>Equipe</th>
+              <th>Categoria</th>
+              <th>Largada</th>
+              <th>Resultado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for athlete in results %}
+              {% set current_status = athlete.result_status or 'OK' %}
+              <tr>
+                <td><span class="bib-badge">{{ athlete.bib }}</span></td>
+                <td>
+                  <span class="athlete-name">{{ athlete.name }}</span>
+                  <span class="subline">{{ 'Masculino' if athlete.sex == 'M' else 'Feminino' }} · {{ athlete.age }} anos</span>
+                </td>
+                <td>{{ athlete.team or 'Sem equipe' }}</td>
+                <td>{{ athlete.category_name }}</td>
+                <td>
+                  {% if athlete.heat_id %}
+                    <span class="badge badge-heat">{{ athlete.heat_label }}</span>
+                    <span class="subline">Posição {{ athlete.heat_position }}</span>
+                  {% else %}
+                    <span class="badge">Sem bateria</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <form method="post" action="/eventos/{{ event.id }}/sumula/{{ athlete.athlete_id }}" class="result-entry">
+                    <select name="status" required aria-label="Resultado de {{ athlete.name }}">
+                      {% for status in status_labels %}
+                        <option value="{{ status }}" {% if current_status == status %}selected{% endif %}>{{ status_labels[status] }}</option>
+                      {% endfor %}
+                    </select>
+                    <input type="text" name="final_time" value="{{ athlete.formatted_time }}" class="mono result-time"
+                           placeholder="mm:ss.cc" aria-label="Tempo de {{ athlete.name }}">
+                    <button class="btn btn-small" type="submit">Salvar</button>
+                    {% if athlete.result_status %}
+                      <button class="btn btn-small btn-ghost-danger" type="submit"
+                              formaction="/eventos/{{ event.id }}/sumula/{{ athlete.athlete_id }}/excluir"
+                              data-confirm="Excluir o resultado de {{ athlete.name }}?">
+                        Excluir
+                      </button>
+                    {% endif %}
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <h3>Nenhum atleta cadastrado</h3>
+        <p>Cadastre ou importe atletas antes de lançar os resultados.</p>
+        <a class="btn" href="/eventos/{{ event.id }}/atletas">Ir para atletas</a>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

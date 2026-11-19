@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Categorias · {{ event.name }}{% endblock %}
+{% block content %}
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Grupos de prova</p>
+      <h1>Categorias</h1>
+      <p class="muted">Cada categoria gera automaticamente os grupos Masculino e Feminino. A faixa etária apenas gera avisos.</p>
+    </div>
+    <div class="stat-strip">
+      <span><strong>{{ categories|length }}</strong> categorias</span>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Nova categoria</p>
+        <h2>Adicionar categoria</h2>
+      </div>
+    </div>
+    <form method="post" action="/eventos/{{ event.id }}/categorias" class="category-row new-category-row">
+      <div class="category-main-fields">
+        <label>
+          <span>Nome</span>
+          <input type="text" name="name" required maxlength="80" placeholder="Ex.: Standard 30-39">
+        </label>
+        <label>
+          <span>Idade mín.</span>
+          <input type="number" name="min_age" min="0" max="120" placeholder="30">
+        </label>
+        <label>
+          <span>Idade máx.</span>
+          <input type="number" name="max_age" min="0" max="120" placeholder="39">
+        </label>
+        <label>
+          <span>Classificação</span>
+          <select name="classification_mode">
+            {% for value, label in classification_modes.items() %}
+              <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </div>
+      <div class="category-actions">
+        <button class="btn btn-small" type="submit">Adicionar</button>
+      </div>
+    </form>
+    <p class="form-note">O nome deve ser único nesta prova. A faixa etária é opcional e nunca bloqueia o cadastro de atletas.</p>
+  </section>
+
+  <section class="panel" style="margin-top: 1rem;">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Categorias cadastradas</p>
+        <h2>Lista de categorias</h2>
+      </div>
+    </div>
+
+    {% if categories %}
+      <div class="category-list">
+        {% for category in categories %}
+          <form method="post" action="/eventos/{{ event.id }}/categorias/{{ category.id }}/editar" class="category-row">
+            <div class="category-main-fields">
+              <label>
+                <span>Nome</span>
+                <input type="text" name="name" value="{{ category.name }}" required maxlength="80">
+              </label>
+              <label>
+                <span>Idade mín.</span>
+                <input type="number" name="min_age" value="{{ category.min_age if category.min_age is not none else '' }}" min="0" max="120">
+              </label>
+              <label>
+                <span>Idade máx.</span>
+                <input type="number" name="max_age" value="{{ category.max_age if category.max_age is not none else '' }}" min="0" max="120">
+              </label>
+              <label>
+                <span>Classificação</span>
+                <select name="classification_mode">
+                  {% for value, label in classification_modes.items() %}
+                    <option value="{{ value }}" {% if category.classification_mode == value %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+            </div>
+            <div class="category-meta">
+              <span class="count-pill">{{ category.male_count }} M</span>
+              <span class="count-pill count-female">{{ category.female_count }} F</span>
+              <span class="count-pill count-total">{{ category.athlete_count }} total</span>
+            </div>
+            <div class="category-actions">
+              <button class="btn btn-small btn-secondary" type="submit">Salvar</button>
+              <button class="btn btn-small btn-ghost-danger" type="submit"
+                      formaction="/eventos/{{ event.id }}/categorias/{{ category.id }}/excluir"
+                      data-confirm="Excluir a categoria {{ category.name }}? Só é possível quando não há atletas ou baterias vinculados.">
+                Excluir
+              </button>
+            </div>
+          </form>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state compact">
+        <p>Nenhuma categoria criada. Adicione ao menos uma para cadastrar atletas.</p>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

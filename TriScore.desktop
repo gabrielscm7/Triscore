@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Triscore
+Comment=Resultados de triatlo offline
+Exec=sh -c 'cd "$(dirname "$1")" && exec ./TriScore.sh' sh %k
+Icon=app/static/img/logo.svg
+Path=.
+Terminal=true
+Categories=Office;Sports;
+StartupNotify=true

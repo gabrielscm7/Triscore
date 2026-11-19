@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if is_edit else 'Novo' }} atleta · {{ event.name }}{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Cadastro de atletas</p>
+      <h1>{{ 'Editar atleta' if is_edit else 'Novo atleta' }}</h1>
+      <p class="muted">A categoria e o sexo definem o grupo de classificação do atleta.</p>
+    </div>
+  </div>
+
+  <div class="panel form-card narrow-form">
+    {% if form_error %}
+      <p class="field-error" role="alert">{{ form_error }}</p>
+    {% endif %}
+
+    {% if not categories %}
+      <p class="inline-note">
+        Nenhuma categoria cadastrada. Crie uma categoria antes de salvar o atleta:
+        <a href="/eventos/{{ event.id }}/categorias">Gerenciar categorias</a>.
+      </p>
+    {% endif %}
+
+    {% if is_edit and athlete.heat_id %}
+      <p class="inline-note">
+        Este atleta está na <strong>Bateria {{ athlete.heat_label }}</strong>.
+        Alterar a categoria ou o sexo removerá o atleta dessa bateria.
+      </p>
+    {% endif %}
+
+    <form method="post" action="/eventos/{{ event.id }}/atletas{% if is_edit %}/{{ athlete.id }}/editar{% else %}/novo{% endif %}" class="form-stack">
+      <div class="form-grid">
+        <label class="span-2">
+          <span>Nome completo</span>
+          <input type="text" name="name" value="{{ athlete.name }}" required maxlength="120" autofocus placeholder="Nome do atleta">
+        </label>
+
+        <label>
+          <span>Idade</span>
+          <input type="number" name="age" value="{{ athlete.age }}" min="1" max="120" required placeholder="Ex.: 34">
+        </label>
+
+        <label>
+          <span>Sexo</span>
+          <select name="sex" required>
+            <option value="">Selecione</option>
+            <option value="M" {% if athlete.sex|string == 'M' %}selected{% endif %}>Masculino</option>
+            <option value="F" {% if athlete.sex|string == 'F' %}selected{% endif %}>Feminino</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Categoria</span>
+          <select name="category_id" required>
+            <option value="">Selecione</option>
+            {% for category in categories %}
+              <option value="{{ category.id }}" {% if athlete.category_id|string == category.id|string %}selected{% endif %}>
+                {{ category.name }} — {{ category.min_age if category.min_age is not none else '' }}{% if category.min_age is not none or category.max_age is not none %}–{% endif %}{{ category.max_age if category.max_age is not none else '' }}{% if category.min_age is not none or category.max_age is not none %} anos{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label>
+          <span>Equipe</span>
+          <select name="team_id">
+            <option value="">Sem equipe</option>
+            {% for team in teams %}
+              <option value="{{ team.id }}" {% if athlete.team_id|string == team.id|string %}selected{% endif %}>{{ team.name }}</option>
+            {% endfor %}
+          </select>
+          <small class="form-note"><a href="/eventos/{{ event.id }}/equipes">Gerenciar equipes</a></small>
+        </label>
+
+        <label class="span-2">
+          <span>Número de peito</span>
+          <input type="number" name="bib" value="{{ athlete.bib }}" min="1" placeholder="Automático: {{ next_bib }}" class="mono">
+        </label>
+      </div>
+
+      <p class="form-note">Deixe o número de peito em branco para usar o próximo número disponível. Idade fora da faixa da categoria gera apenas um aviso.</p>
+
+      <div class="form-actions">
+        <button class="btn" type="submit">{{ 'Salvar alterações' if is_edit else 'Cadastrar atleta' }}</button>
+        <a class="btn btn-secondary" href="/eventos/{{ event.id }}/atletas">Cancelar</a>
+      </div>
+    </form>
+  </div>
+
+  {% if is_edit %}
+    <form method="post" action="/eventos/{{ event.id }}/atletas/{{ athlete.id }}/excluir" class="form-actions" style="margin-top: 1rem;">
+      <button class="btn btn-ghost-danger" type="submit"
+              data-confirm="Excluir o atleta {{ athlete.name }}?{% if athlete.heat_id %} Ele também será removido da bateria {{ athlete.heat_label }}.{% endif %}">
+        Excluir atleta
+      </button>
+    </form>
+  {% endif %}
+{% endblock %}

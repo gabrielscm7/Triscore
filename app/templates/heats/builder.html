@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% block title %}Baterias · {{ event.name }}{% endblock %}
+{% block content %}
+  <div class="builder-toolbar">
+    <div>
+      <p class="eyebrow">Montagem da prova</p>
+      <h1>Baterias e ordem de largada</h1>
+      <p class="muted">Prova contra o relógio: a bateria organiza a largada; a classificação usa pódios separados ou mistos conforme a categoria.</p>
+    </div>
+    <div class="builder-actions">
+      <a class="btn btn-secondary" href="/eventos/{{ event.id }}/configuracao">Configurar limite</a>
+      <a class="btn btn-secondary" href="/eventos/{{ event.id }}/atletas">Atletas</a>
+      <a class="btn btn-secondary" href="/eventos/{{ event.id }}/pdfs/cronograma">Exportar cronograma PDF</a>
+      <a class="btn btn-secondary" href="/eventos/{{ event.id }}/pdfs/lista-largada">Lista de largada PDF</a>
+    </div>
+  </div>
+
+  {% if overview %}
+    <div class="group-summary" aria-label="Contagem de atletas por grupo de prova">
+      {% for category in overview %}
+        <div class="group-card">
+          <div class="group-card-header">
+            <h3>{{ category.name }}</h3>
+            <span class="badge">{{ category.min_age if category.min_age is not none else '' }}{% if category.min_age is not none or category.max_age is not none %}–{% endif %}{{ category.max_age if category.max_age is not none else '' }}{% if category.min_age is not none or category.max_age is not none %} anos{% endif %}</span>
+          </div>
+          <div class="group-counts">
+            <span><strong>M {{ category.male_total }}</strong> · {{ category.male_available }} disp.</span>
+            <span><strong>F {{ category.female_total }}</strong> · {{ category.female_available }} disp.</span>
+            <span><strong>Misto {{ category.mixed_total }}</strong> · {{ category.mixed_available }} disp.</span>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="heats-layout">
+    <aside class="builder-sidebar">
+      <section class="sidebar-panel">
+        <p class="eyebrow">Distribuição automática</p>
+        <h2>Gerar baterias</h2>
+        {% if overview %}
+          <form method="post" action="/eventos/{{ event.id }}/baterias/gerar" class="generator-form" id="generator-form">
+            <label>
+              <span>Categoria</span>
+              <select name="category_id" id="generator-category" required>
+                {% for category in overview %}
+                  <option value="{{ category.id }}"
+                          data-male="{{ category.male_available }}"
+                          data-female="{{ category.female_available }}"
+                          data-mixed="{{ category.mixed_available }}">
+                    {{ category.name }}
+                  </option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>
+              <span>Grupo de largada</span>
+              <select name="sex_mode" id="generator-mode">
+                <option value="M">Masculino</option>
+                <option value="F">Feminino</option>
+                <option value="X">Misto (M + F)</option>
+              </select>
+            </label>
+            <label>
+              <span>Ordem inicial dos atletas</span>
+              <select name="criterion">
+                <option value="bib">Número de peito</option>
+                <option value="alpha">Alfabética</option>
+                <option value="random">Sorteio</option>
+              </select>
+            </label>
+            <div class="generator-count" id="generator-count" aria-live="polite"></div>
+            <button class="btn btn-block" type="submit">Gerar baterias</button>
+            <p class="split-note">Limite atual: {{ event.heat_limit }} atletas por bateria. Grupos maiores são divididos em A, B, C...</p>
+          </form>
+        {% else %}
+          <div class="empty-state compact">
+            <p>Crie categorias para montar as baterias.</p>
+            <a class="btn btn-small" href="/eventos/{{ event.id }}/categorias">Gerenciar categorias</a>
+          </div>
+        {% endif %}
+      </section>
+
+      {% if overview %}
+        <details class="sidebar-panel empty-heat-panel">
+          <summary>Nova bateria vazia</summary>
+          <form method="post" action="/eventos/{{ event.id }}/baterias/nova" class="generator-form" style="margin-top: 0.7rem;">
+            <label>
+              <span>Categoria</span>
+              <select name="category_id" required>
+                {% for category in overview %}
+                  <option value="{{ category.id }}">{{ category.name }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>
+              <span>Grupo de largada</span>
+              <select name="sex_mode">
+                <option value="M">Masculino</option>
+                <option value="F">Feminino</option>
+                <option value="X">Misto (M + F)</option>
+              </select>
+            </label>
+            <button class="btn btn-secondary btn-block" type="submit">Criar vazia</button>
+          </form>
+          <p class="split-note" style="margin-top: 0.55rem;">Use para acomodar atletas manualmente. A letra é definida pela sequência da categoria e modalidade.</p>
+        </details>
+      {% endif %}
+
+      <section class="sidebar-panel unassigned-panel" id="unassigned-zone" data-drop-target="unassigned">
+        <div class="unassigned-head">
+          <div>
+            <p class="eyebrow">Aguardando bateria</p>
+            <h2>Não alocados</h2>
+          </div>
+          <span class="count-pill">{{ unassigned|length }}</span>
+        </div>
+        <div class="unassigned-list" id="unassigned-list">
+          {% for athlete in unassigned %}
+            <div class="athlete-row" draggable="true"
+                 data-athlete-id="{{ athlete.id }}" data-source-heat="">
+              <span class="bib-badge">{{ athlete.bib }}</span>
+              <div class="athlete-row-main">
+                <strong>{{ athlete.name }}</strong>
+                <small>{{ athlete.category_name }} · {{ athlete.sex|mode_label }}{% if athlete.team %} · {{ athlete.team }}{% endif %}</small>
+              </div>
+              <span class="drag-handle" aria-hidden="true">⠿</span>
+            </div>
+          {% else %}
+            <p class="unassigned-empty">Todos os atletas já estão em baterias.</p>
+          {% endfor %}
+        </div>
+        <p class="split-note" style="margin-top: 0.6rem;">Arraste um atleta para uma bateria. Solte aqui para retirá-lo da largada.</p>
+      </section>
+    </aside>
+
+    <section>
+      {% if heats %}
+        <p class="reorder-note">Arraste pelo marcador da bateria para alterar a sequência da prova. Segure e arraste os atletas para ajustar a ordem de largada.</p>
+        <div class="heat-list" id="heat-list">
+          {% for heat in heats %}
+            <article class="heat-card" data-heat-id="{{ heat.id }}" data-sequence="{{ heat.sequence }}">
+              <header class="heat-header">
+                <span class="heat-drag-handle" draggable="true" data-heat-handle="{{ heat.id }}"
+                      title="Arraste para reordenar a bateria" aria-label="Reordenar bateria">⠿</span>
+                <span class="heat-number">{{ heat.sequence }}</span>
+                <div class="heat-title">
+                  <h2>Bateria {{ heat.label }} <span class="muted" style="font-weight: 400;">· {{ heat.category_name }} · {{ heat.sex_mode|mode_label }}</span></h2>
+                  <div class="heat-meta">
+                    <span>{{ heat.entries|length }} atleta(s)</span>
+                    {% if heat.entries|length >= event.heat_limit %}
+                      <span class="badge badge-warn">Limite atingido</span>
+                    {% else %}
+                      <span>até {{ event.heat_limit }}</span>
+                    {% endif %}
+                    {% if event.schedule_enabled and heat.scheduled_start %}
+                      <span class="heat-schedule">Início previsto {{ heat.scheduled_start }}</span>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="heat-header-actions">
+                  <form method="post" action="/eventos/{{ event.id }}/baterias/{{ heat.id }}/excluir">
+                    <button class="btn btn-small btn-ghost-danger" type="submit"
+                            data-confirm="Excluir a Bateria {{ heat.label }}?{% if heat.entries %} Os {{ heat.entries|length }} atleta(s) voltarão para “Não alocados”.{% endif %}">
+                      Excluir
+                    </button>
+                  </form>
+                </div>
+              </header>
+
+              <div class="heat-entries" data-heat-drop="{{ heat.id }}">
+                {% for athlete in heat.entries %}
+                  <div class="athlete-row" draggable="true"
+                       data-athlete-id="{{ athlete.athlete_id }}"
+                       data-source-heat="{{ heat.id }}"
+                       data-position="{{ athlete.position }}">
+                    <span class="bib-badge">{{ athlete.bib }}</span>
+                    <div class="athlete-row-main">
+                      <strong>{{ athlete.name }}</strong>
+                      <small>{{ athlete.team or 'Sem equipe' }}{% if heat.sex_mode == 'X' %} · {{ athlete.sex|mode_label }}{% endif %}</small>
+                    </div>
+                    {% if event.schedule_enabled and athlete.scheduled_time %}
+                      <span class="athlete-row-time">{{ athlete.scheduled_time }}</span>
+                    {% else %}
+                      <span class="drag-handle" aria-hidden="true">⠿</span>
+                    {% endif %}
+                  </div>
+                {% else %}
+                  <div class="heat-empty">Arraste atletas para esta bateria ou use a lista de não alocados.</div>
+                {% endfor %}
+              </div>
+
+              <footer class="heat-footer">
+                <form method="post" action="/eventos/{{ event.id }}/baterias/{{ heat.id }}/ordenar" class="order-form">
+                  <label class="sr-only" for="order-{{ heat.id }}">Ordenar atletas da Bateria {{ heat.label }}</label>
+                  <select name="criterion" id="order-{{ heat.id }}">
+                    <option value="bib">Por peito</option>
+                    <option value="alpha">Alfabética</option>
+                    <option value="random">Sorteio</option>
+                  </select>
+                  <button class="btn btn-small btn-secondary" type="submit">Reordenar</button>
+                </form>
+                {% if event.schedule_enabled %}
+                  <span class="heat-schedule">{% if heat.scheduled_start %}Primeira largada {{ heat.scheduled_start }}{% else %}Sem horário: bateria vazia{% endif %}</span>
+                {% endif %}
+              </footer>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="builder-empty">
+          <p class="eyebrow">Nenhuma bateria</p>
+          <h2>A largada ainda não foi organizada</h2>
+          {% if overview %}
+            <p>Escolha uma categoria e modalidade ao lado para distribuir os atletas automaticamente.<br>Você poderá ajustar a ordem e mover atletas depois.</p>
+          {% else %}
+            <p>Cadastre categorias e atletas para começar a montagem.</p>
+          {% endif %}
+        </div>
+      {% endif %}
+    </section>
+  </div>
+
+  <script>
+    window.TRISCORE_HEAT_LIMIT = {{ event.heat_limit }};
+    window.TRISCORE_EVENT_URL = "/eventos/{{ event.id }}/baterias";
+  </script>
+{% endblock %}
+{% block scripts %}
+  <script src="/static/js/heats.js" defer></script>
+{% endblock %}

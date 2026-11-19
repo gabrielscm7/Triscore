@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Atletas · {{ event.name }}{% endblock %}
+{% block content %}
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Cadastro de atletas</p>
+      <h1>Atletas</h1>
+      <p class="muted">Peito, categoria e equipe em um único cadastro local.</p>
+    </div>
+    <div class="stat-strip">
+      <span><strong>{{ athletes|length }}</strong> encontrados</span>
+      <span><strong>{{ categories|length }}</strong> categorias</span>
+    </div>
+  </div>
+
+  <div class="page-toolbar">
+    <div></div>
+    <div class="actions">
+      <a class="btn btn-secondary" href="/eventos/{{ event.id }}/atletas/importar">Importar CSV</a>
+      <a class="btn" href="/eventos/{{ event.id }}/atletas/novo">Novo atleta</a>
+    </div>
+  </div>
+
+  <form method="get" action="/eventos/{{ event.id }}/atletas" class="filters">
+    <label>
+      <span>Buscar</span>
+      <input type="search" name="q" value="{{ filters.q }}" placeholder="Nome, equipe ou peito">
+    </label>
+    <label>
+      <span>Categoria</span>
+      <select name="category_id">
+        <option value="">Todas</option>
+        {% for category in categories %}
+          <option value="{{ category.id }}" {% if filters.category_id == category.id %}selected{% endif %}>{{ category.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span>Equipe</span>
+      <select name="team_id">
+        <option value="">Todas</option>
+        {% for team in teams %}
+          <option value="{{ team.id }}" {% if filters.team_id == team.id %}selected{% endif %}>{{ team.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span>Sexo</span>
+      <select name="sex">
+        <option value="">Todos</option>
+        <option value="M" {% if filters.sex == 'M' %}selected{% endif %}>Masculino</option>
+        <option value="F" {% if filters.sex == 'F' %}selected{% endif %}>Feminino</option>
+      </select>
+    </label>
+    <div class="filter-actions">
+      <button class="btn btn-secondary" type="submit">Filtrar</button>
+    </div>
+  </form>
+
+  {% if athletes %}
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Peito</th>
+            <th>Atleta</th>
+            <th>Sexo</th>
+            <th>Idade</th>
+            <th>Categoria</th>
+            <th>Bateria</th>
+            <th>Conferência</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for athlete in athletes %}
+            <tr>
+              <td><span class="bib-badge">{{ athlete.bib }}</span></td>
+              <td>
+                <span class="athlete-name">{{ athlete.name }}</span>
+                {% if athlete.team %}<span class="subline">{{ athlete.team }}</span>{% endif %}
+              </td>
+              <td>{{ 'Masculino' if athlete.sex == 'M' else 'Feminino' }}</td>
+              <td class="mono">{{ athlete.age }}</td>
+              <td>
+                {{ athlete.category_name }}
+                <span class="subline">{{ athlete.min_age if athlete.min_age is not none else '' }}{% if athlete.min_age is not none or athlete.max_age is not none %}–{% endif %}{{ athlete.max_age if athlete.max_age is not none else '' }}{% if athlete.min_age is not none or athlete.max_age is not none %} anos{% endif %}</span>
+              </td>
+              <td>
+                {% if athlete.heat_id %}
+                  <span class="badge badge-heat">{{ athlete.heat_label }} · {{ athlete.heat_sex_mode|mode_label }}</span>
+                  <span class="subline">Largada {{ athlete.heat_sequence }}</span>
+                {% else %}
+                  <span class="badge">Não alocado</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if athlete.age_warning %}
+                  <span class="badge badge-warn" title="{{ athlete.age_warning }}">Idade fora da faixa</span>
+                {% else %}
+                  <span class="badge">OK</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="table-actions">
+                  <a class="link-action" href="/eventos/{{ event.id }}/atletas/{{ athlete.id }}/editar">Editar</a>
+                  <form method="post" action="/eventos/{{ event.id }}/atletas/{{ athlete.id }}/excluir">
+                    <button class="link-action link-danger" type="submit"
+                            data-confirm="Excluir o atleta {{ athlete.name }}?{% if athlete.heat_id %} Ele também será removido da bateria {{ athlete.heat_label }}.{% endif %}">
+                      Excluir
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="table-count">{{ athletes|length }} atleta(s) exibido(s).</p>
+  {% else %}
+    <div class="empty-state">
+      <h3>Nenhum atleta encontrado</h3>
+      {% if filters.q or filters.category_id or filters.team_id or filters.sex %}
+        <p>Altere os filtros ou limpe a busca.</p>
+        <a class="btn btn-secondary" href="/eventos/{{ event.id }}/atletas">Limpar filtros</a>
+      {% else %}
+        <p>Comece importando um CSV ou cadastrando o primeiro atleta.</p>
+        <div class="form-actions" style="justify-content: center; margin-top: 0.8rem;">
+          <a class="btn btn-secondary" href="/eventos/{{ event.id }}/atletas/importar">Importar CSV</a>
+          <a class="btn" href="/eventos/{{ event.id }}/atletas/novo">Novo atleta</a>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endblock %}

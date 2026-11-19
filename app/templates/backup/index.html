@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Backup · {{ app_name }}{% endblock %}
+{% block content %}
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Cópia de segurança</p>
+      <h1>Backup agora</h1>
+      <p class="muted">Copie o banco e os PDFs para um pendrive ou outra pasta escolhida.</p>
+    </div>
+    <div class="stat-strip">
+      <span><strong>{{ environment.label }}</strong> ambiente</span>
+      <span><strong>{{ automatic_backups|length }}</strong> backups automáticos recentes</span>
+    </div>
+  </div>
+
+  <div class="settings-grid">
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Cópia manual</p>
+          <h2>Escolher destino</h2>
+        </div>
+      </div>
+      <form method="post" action="/backup" class="form-stack">
+        <label>
+          <span>Pasta de destino</span>
+          <input type="text" name="destination" required maxlength="500"
+                 placeholder="Ex.: /media/usuario/PENDRIVE ou /home/usuario/Backups">
+        </label>
+        <p class="form-note">
+          Informe uma pasta que já existe. O Triscore cria dentro dela uma subpasta
+          <span class="mono">triscore-backup-{{ environment.name }}-AAAAMMDD-HHMMSS</span>
+          com o banco, os PDFs de <span class="mono">exports/</span>, os arquivos de premiação e um manifesto.
+        </p>
+        <div class="form-actions">
+          <button class="btn" type="submit">Backup agora</button>
+          <a class="btn btn-secondary" href="/eventos">Voltar às provas</a>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Conferência</p>
+          <h2>Diretórios em uso</h2>
+        </div>
+      </div>
+      <dl class="detail-list">
+        <div><dt>Ambiente</dt><dd>{{ environment.label }}</dd></div>
+        <div><dt>Banco</dt><dd class="mono">{{ environment.db_path }}</dd></div>
+        <div><dt>Backups automáticos</dt><dd class="mono">{{ environment.backup_dir }}</dd></div>
+        <div><dt>PDFs</dt><dd class="mono">{{ environment.exports_dir }}</dd></div>
+      </dl>
+      <p class="form-note">
+        O backup automático da súmula continua sendo criado antes de cada alteração de resultado.
+        O botão acima é uma cópia adicional, feita no destino escolhido.
+      </p>
+    </section>
+  </div>
+
+  <section class="panel" style="margin-top: 1.25rem;">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Histórico local</p>
+        <h2>Backups automáticos recentes</h2>
+      </div>
+    </div>
+    {% if automatic_backups %}
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>Arquivo</th><th>Data</th><th>Tamanho</th></tr>
+          </thead>
+          <tbody>
+            {% for item in automatic_backups %}
+              <tr>
+                <td class="mono">{{ item.name }}</td>
+                <td>{{ item.modified.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+                <td>{{ (item.size / 1024) | round(1) }} KB</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state standalone">
+        <p>Nenhum backup automático encontrado em <span class="mono">{{ environment.backup_dir }}</span>.</p>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Equipes · {{ event.name }}{% endblock %}
+{% block content %}
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Cadastro de equipes</p>
+      <h1>Equipes</h1>
+      <p class="muted">Equipes são opcionais e pertencem exclusivamente a esta prova.</p>
+    </div>
+    <div class="stat-strip">
+      <span><strong>{{ teams|length }}</strong> equipes</span>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Nova equipe</p>
+        <h2>Adicionar equipe</h2>
+      </div>
+    </div>
+    <form method="post" action="/eventos/{{ event.id }}/equipes" class="category-row new-category-row">
+      <div class="category-main-fields team-name-fields">
+        <label>
+          <span>Nome</span>
+          <input type="text" name="name" required maxlength="120" placeholder="Ex.: Tri Clube Central">
+        </label>
+      </div>
+      <div class="category-actions">
+        <button class="btn btn-small" type="submit">Adicionar</button>
+      </div>
+    </form>
+    <p class="form-note">O nome deve ser único nesta prova, sem diferenciar maiúsculas e minúsculas.</p>
+  </section>
+
+  <section class="panel" style="margin-top: 1rem;">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Equipes cadastradas</p>
+        <h2>Lista de equipes</h2>
+      </div>
+    </div>
+
+    {% if teams %}
+      <div class="category-list">
+        {% for team in teams %}
+          <form method="post" action="/eventos/{{ event.id }}/equipes/{{ team.id }}/editar" class="category-row">
+            <div class="category-main-fields team-name-fields">
+              <label>
+                <span>Nome</span>
+                <input type="text" name="name" value="{{ team.name }}" required maxlength="120">
+              </label>
+            </div>
+            <div class="category-meta">
+              <span class="count-pill count-total">{{ team.athlete_count }} atleta(s)</span>
+            </div>
+            <div class="category-actions">
+              <button class="btn btn-small btn-secondary" type="submit">Salvar</button>
+              <button class="btn btn-small btn-ghost-danger" type="submit"
+                      formaction="/eventos/{{ event.id }}/equipes/{{ team.id }}/excluir"
+                      data-confirm="Excluir a equipe {{ team.name }}? Só é possível quando não há atletas vinculados.">
+                Excluir
+              </button>
+            </div>
+          </form>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state compact">
+        <p>Nenhuma equipe cadastrada. Você também pode criá-las pela importação de atletas.</p>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

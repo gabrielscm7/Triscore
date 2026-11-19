@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="{{ 'dark' if theme.is_dark else 'light' }}">
+  <title>Premiação · {{ event.name }}</title>
+  <link rel="icon" href="/static/img/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/awards.css">
+  {% if theme.font_url %}
+    <style>
+      @font-face {
+        font-family: "AwardCustom";
+        src: url("{{ theme.font_url }}") format("{{ theme.font_format or 'truetype' }}");
+        font-display: swap;
+      }
+    </style>
+  {% endif %}
+</head>
+<body class="awards-body{% if not theme.animations_enabled %} no-animations{% endif %}"
+      data-layout="{{ theme.layout }}"
+      data-animations="{{ '1' if theme.animations_enabled else '0' }}"
+      style="--award-bg: {{ theme.background_color }}; --award-text: {{ theme.text_color }}; --award-accent: {{ theme.accent_color }}; --award-panel: {{ theme.panel_color }}; --award-panel-strong: {{ theme.panel_strong_color }}; --award-border: {{ theme.border_color }}; --award-muted: {{ theme.muted_color }}; --award-accent-soft: {{ theme.accent_soft_color }}; --award-bg-opacity: {{ theme.background_opacity_ratio }}; --award-bg-dim: {{ theme.background_dim_ratio }}; --award-display-font: {% if theme.font_url %}'AwardCustom', {% endif %}'Fira Sans', 'Trebuchet MS', sans-serif;">
+  {% set environment = request.app.state.environment %}
+  {% if environment and environment.is_test %}
+    <div class="awards-test-banner" role="status">
+      <strong>MODO TESTE</strong>
+      <span>dados fictícios · {{ environment.db_path.name }}</span>
+    </div>
+  {% endif %}
+  <div class="awards-background" aria-hidden="true"
+       {% if theme.background_url %}style="background-image: url('{{ theme.background_url }}')"{% endif %}></div>
+  <div class="awards-background-overlay" aria-hidden="true"></div>
+
+  <div class="awards-app">
+    <header class="awards-header">
+      <a class="awards-brand" href="/premiacao">
+        {% if theme.show_logo %}
+          <img src="/static/img/logo.svg" alt="" width="38" height="38">
+        {% endif %}
+        <span>
+          <small>Premiação</small>
+          <strong>{{ event.name }}</strong>
+        </span>
+      </a>
+      <div class="awards-header-actions">
+        <a href="/eventos/{{ event.id }}/classificacao">Classificação</a>
+        <button type="button" data-slide-text-open>Editar texto</button>
+        <button type="button" data-settings-open>Configurar tema</button>
+        <button type="button" data-fullscreen>Tela cheia</button>
+        <a href="/premiacao">Trocar prova</a>
+      </div>
+    </header>
+
+    {% if theme.banner_url %}
+      <div class="awards-banner">
+        <img src="{{ theme.banner_url }}" alt="Banner da prova">
+      </div>
+    {% endif %}
+
+    {% if request.query_params.get('ok') %}
+      <div class="awards-flash awards-flash-ok">{{ request.query_params.get('ok') }}</div>
+    {% endif %}
+    {% if request.query_params.get('error') %}
+      <div class="awards-flash awards-flash-error" role="alert">{{ request.query_params.get('error') }}</div>
+    {% endif %}
+
+    {% if groups %}
+      <main class="awards-main"
+            data-award-app
+            data-event-id="{{ event.id }}"
+            data-group-count="{{ groups|length }}"
+            data-slide-count="{{ groups|length + 2 }}">
+        <div class="awards-group-nav">
+          <button type="button" class="awards-nav-button" data-group-prev aria-label="Slide anterior">←</button>
+          <div class="awards-group-picker">
+            <span data-group-status aria-live="polite">Slide 1 de {{ groups|length + 2 }}</span>
+            <select data-group-select aria-label="Selecionar slide">
+              <option value="0">Abertura · {{ settings.opening_title }}</option>
+              {% for group in groups %}
+                <option value="{{ loop.index }}">{{ group.display_title }} · {{ group.sex_label }}</option>
+              {% endfor %}
+              <option value="{{ groups|length + 1 }}">Encerramento · {{ settings.closing_title }}</option>
+            </select>
+          </div>
+          <button type="button" class="awards-nav-button" data-group-next aria-label="Próximo slide">→</button>
+        </div>
+
+        <div class="awards-stage">
+          {% set stage_order = [(2, 'second'), (1, 'first'), (3, 'third')] %}
+
+          <section class="award-group award-slide award-slide-opening is-active"
+                   data-slide-index="0" data-slide-kind="opening">
+            <div class="award-slide-hero">
+              {% if theme.show_logo %}
+                <img class="award-hero-logo" src="/static/img/logo.svg" alt="" width="110" height="110">
+              {% endif %}
+              <p class="awards-eyebrow">{{ event.name }}</p>
+              <h1>{{ settings.opening_title }}</h1>
+              {% if settings.opening_text %}<p class="award-call-text">{{ settings.opening_text }}</p>{% endif %}
+              <p class="award-slide-hint">Use as setas ou o seletor para navegar. Espaço revela o pódio.</p>
+            </div>
+          </section>
+
+          {% for group in groups %}
+            <section class="award-group award-slide award-slide-category"
+                     data-group-index="{{ loop.index0 }}"
+                     data-slide-index="{{ loop.index }}"
+                     data-slide-kind="group"
+                     data-category-id="{{ group.category_id }}"
+                     data-group-sex="{{ group.sex }}"
+                     data-default-title="{{ group.category_name }}"
+                     data-custom-title="{{ group.custom_title }}"
+                     data-custom-call-text="{{ group.custom_call_text }}">
+              <header class="award-group-heading">
+                <p class="awards-eyebrow">{{ group.sex_label }}</p>
+                <h1 data-slide-heading>{{ group.display_title }}</h1>
+                <p class="award-call-text" data-slide-call>{{ group.call_text }}</p>
+                <p class="award-event-name">{{ event.name }}</p>
+              </header>
+
+              <div class="podium">
+                {% for position, slot_class in stage_order %}
+                  <div class="podium-slot podium-{{ slot_class }}" data-position="{{ position }}">
+                    <div class="podium-cards">
+                      {% for athlete in group.podium[position] %}
+                        <article class="podium-card">
+                          <span class="podium-place">{{ position }}º</span>
+                          <strong class="podium-name">{{ athlete.name }}</strong>
+                          <span class="podium-team">{{ athlete.team or 'Sem equipe' }}</span>
+                          <span class="podium-details">
+                            Peito {{ athlete.bib }}
+                            {% if athlete.formatted_time %} · {{ athlete.formatted_time }}{% endif %}
+                          </span>
+                        </article>
+                      {% endfor %}
+                      {% if not group.podium[position] %}
+                        <div class="podium-empty">Posição não ocupada</div>
+                      {% endif %}
+                    </div>
+                    <div class="podium-pedestal">
+                      <span>{{ position }}º</span>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </section>
+          {% endfor %}
+
+          <section class="award-group award-slide award-slide-closing"
+                   data-slide-index="{{ groups|length + 1 }}" data-slide-kind="closing">
+            <div class="award-slide-hero">
+              {% if theme.show_logo %}
+                <img class="award-hero-logo" src="/static/img/logo.svg" alt="" width="110" height="110">
+              {% endif %}
+              <p class="awards-eyebrow">{{ event.name }}</p>
+              <h1>{{ settings.closing_title }}</h1>
+              {% if settings.closing_text %}<p class="award-call-text">{{ settings.closing_text }}</p>{% endif %}
+              <p class="award-slide-hint">Obrigado por acompanhar a premiação.</p>
+            </div>
+          </section>
+        </div>
+
+        <footer class="awards-controls">
+          <button type="button" class="awards-control-secondary" data-reveal-reset>Reiniciar pódio</button>
+          <button type="button" class="awards-control-primary" data-reveal-next>Revelar 3º lugar</button>
+          <span class="awards-control-hint">Setas: slides · Espaço: revelar · R: reiniciar · F: tela cheia</span>
+          <a class="awards-control-secondary" href="/premiacao/{{ event.id }}/pdf">PDF de premiação</a>
+        </footer>
+      </main>
+    {% else %}
+      <main class="awards-main awards-empty">
+        <div>
+          <p class="awards-eyebrow">Premiação</p>
+          <h1>Nenhum pódio disponível</h1>
+          <p>Lance resultados válidos na súmula para montar a premiação.</p>
+          <div class="awards-empty-actions">
+            <a href="/eventos/{{ event.id }}/sumula">Abrir súmula</a>
+            <a href="/eventos/{{ event.id }}/classificacao">Ver classificação</a>
+          </div>
+        </div>
+      </main>
+    {% endif %}
+  </div>
+
+  <dialog class="awards-settings" data-settings-dialog>
+    <div class="awards-settings-scroll">
+      <header class="awards-settings-header">
+        <div>
+          <p class="awards-eyebrow">Aparência</p>
+          <h2>Configurar tema</h2>
+        </div>
+        <button type="button" class="awards-dialog-close" data-settings-close aria-label="Fechar">×</button>
+      </header>
+
+      <form method="post" action="/premiacao/{{ event.id }}/tema" class="awards-settings-form" data-theme-form>
+        <div class="award-layout-preview" data-layout-preview data-preview-layout="{{ theme.layout }}">
+          <div class="preview-banner" data-preview-banner {% if theme.banner_url %}style="background-image: url('{{ theme.banner_url }}')"{% endif %}>Banner</div>
+          <div class="preview-slide">
+            <div class="preview-heading">Categoria</div>
+            <div class="preview-podium">
+              <span>2º</span><span>1º</span><span>3º</span>
+            </div>
+          </div>
+          <p class="preview-caption">Prévia ao vivo do layout</p>
+        </div>
+
+        <label>
+          <span>Layout do slide</span>
+          <select name="layout" data-theme-layout>
+            {% for value, label in layouts.items() %}
+              <option value="{{ value }}" {% if settings.layout == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label>
+          <span>Tema de cores</span>
+          <select name="preset" data-theme-preset>
+            {% for value, preset in presets.items() %}
+              <option value="{{ value }}"
+                      data-accent="{{ preset.accent }}"
+                      data-background="{{ preset.background }}"
+                      data-text="{{ preset.text }}"
+                      {% if settings.preset == value %}selected{% endif %}>
+                {{ preset.label }}
+              </option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <div class="awards-theme-colors" data-custom-colors>
+          <label>
+            <span>Destaque</span>
+            <input type="color" name="accent_color" value="{{ theme.accent_color }}"
+                   data-theme-accent {% if settings.preset != 'custom' %}disabled{% endif %}>
+          </label>
+          <label>
+            <span>Fundo</span>
+            <input type="color" name="background_color" value="{{ theme.background_color }}"
+                   data-theme-background {% if settings.preset != 'custom' %}disabled{% endif %}>
+          </label>
+          <label>
+            <span>Texto</span>
+            <input type="color" name="text_color" value="{{ theme.text_color }}"
+                   data-theme-text {% if settings.preset != 'custom' %}disabled{% endif %}>
+          </label>
+        </div>
+
+        <div class="awards-range-row">
+          <label>
+            <span>Opacidade do fundo <output data-opacity-output>{{ settings.background_opacity }}%</output></span>
+            <input type="range" name="background_opacity" min="0" max="100" value="{{ settings.background_opacity }}" data-bg-opacity>
+          </label>
+          <label>
+            <span>Escurecimento <output data-dim-output>{{ settings.background_dim }}%</output></span>
+            <input type="range" name="background_dim" min="30" max="100" value="{{ settings.background_dim }}" data-bg-dim>
+          </label>
+        </div>
+
+        <div class="awards-section-divider">
+          <span>Abertura e encerramento</span>
+        </div>
+        <label>
+          <span>Título da abertura</span>
+          <input type="text" name="opening_title" value="{{ settings.opening_title }}" maxlength="120">
+        </label>
+        <label>
+          <span>Frase da abertura</span>
+          <textarea name="opening_text" rows="2" maxlength="300">{{ settings.opening_text }}</textarea>
+        </label>
+        <label>
+          <span>Título do encerramento</span>
+          <input type="text" name="closing_title" value="{{ settings.closing_title }}" maxlength="120">
+        </label>
+        <label>
+          <span>Frase do encerramento</span>
+          <textarea name="closing_text" rows="2" maxlength="300">{{ settings.closing_text }}</textarea>
+        </label>
+
+        <label class="awards-check">
+          <input type="checkbox" name="show_logo" value="1" {% if settings.show_logo %}checked{% endif %}>
+          <span>Exibir logo na apresentação</span>
+        </label>
+        <label class="awards-check">
+          <input type="checkbox" name="animations_enabled" value="1" {% if settings.animations_enabled %}checked{% endif %}>
+          <span>Ativar animações de revelação</span>
+        </label>
+
+        <p class="awards-dialog-note">Temas personalizados exigem contraste mínimo entre texto, destaque e fundo.</p>
+        <div class="awards-dialog-actions">
+          <button type="button" class="awards-control-secondary" data-settings-close>Cancelar</button>
+          <button type="submit" class="awards-control-primary">Salvar tema</button>
+        </div>
+      </form>
+
+      <form method="post" action="/premiacao/{{ event.id }}/tema/assets" enctype="multipart/form-data" class="awards-settings-form awards-assets-form">
+        <div class="awards-section-divider">
+          <span>Imagens e fonte</span>
+        </div>
+        <div class="awards-upload-field">
+          <label>
+            <span>Banner <small>PNG, JPEG ou WebP · até 8 MB</small></span>
+            <input type="file" name="banner" accept="image/png,image/jpeg,image/webp" data-asset-banner>
+          </label>
+          {% if settings.banner_filename %}
+            <span class="awards-current-file">Banner atual configurado</span>
+            <label class="awards-check"><input type="checkbox" name="remove_banner" value="1"><span>Remover banner</span></label>
+          {% endif %}
+        </div>
+        <div class="awards-upload-field">
+          <label>
+            <span>Imagem de fundo <small>PNG, JPEG ou WebP · até 8 MB</small></span>
+            <input type="file" name="background" accept="image/png,image/jpeg,image/webp" data-asset-background>
+          </label>
+          {% if settings.background_filename %}
+            <span class="awards-current-file">Fundo atual configurado</span>
+            <label class="awards-check"><input type="checkbox" name="remove_background" value="1"><span>Remover fundo</span></label>
+          {% endif %}
+        </div>
+        <div class="awards-upload-field">
+          <label>
+            <span>Fonte de destaque <small>WOFF2 ou TTF · até 3 MB</small></span>
+            <input type="file" name="custom_font" accept=".woff2,.ttf,font/woff2,font/ttf" data-asset-font>
+          </label>
+          {% if settings.font_filename %}
+            <span class="awards-current-file">Fonte personalizada configurada</span>
+            <label class="awards-check"><input type="checkbox" name="remove_font" value="1"><span>Remover fonte</span></label>
+          {% endif %}
+        </div>
+        <div class="awards-dialog-actions">
+          <button type="submit" class="awards-control-primary">Salvar arquivos</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <dialog class="awards-settings awards-text-dialog" data-slide-text-dialog>
+    <form method="post" action="" data-slide-text-form>
+      <header class="awards-settings-header">
+        <div>
+          <p class="awards-eyebrow">Texto do slide</p>
+          <h2>Editar categoria</h2>
+        </div>
+        <button type="button" class="awards-dialog-close" data-slide-text-close aria-label="Fechar">×</button>
+      </header>
+      <label>
+        <span>Título</span>
+        <input type="text" name="title" maxlength="140" data-slide-text-title>
+      </label>
+      <label>
+        <span>Frase de chamada</span>
+        <textarea name="call_text" rows="3" maxlength="260" data-slide-text-call></textarea>
+      </label>
+      <p class="awards-dialog-note">Deixe os campos vazios para voltar ao texto padrão.</p>
+      <div class="awards-dialog-actions">
+        <button type="button" class="awards-control-secondary" data-slide-text-close>Cancelar</button>
+        <button type="submit" class="awards-control-primary">Salvar texto</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/static/js/awards.js" defer></script>
+</body>
+</html>
