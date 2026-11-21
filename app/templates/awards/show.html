@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="{{ 'dark' if theme.is_dark else 'light' }}">
   <title>Premiação · {{ event.name }}</title>
-  <link rel="icon" href="/static/img/logo.svg" type="image/svg+xml">
+  <link rel="icon" href="/static/img/logo.png" type="image/png">
   <link rel="stylesheet" href="/static/css/awards.css">
   {% if theme.font_url %}
     <style>
@@ -36,7 +36,7 @@
     <header class="awards-header">
       <a class="awards-brand" href="/premiacao">
         {% if theme.show_logo %}
-          <img src="/static/img/logo.svg" alt="" width="38" height="38">
+          <img src="/static/img/logo.png" alt="" width="38" height="38">
         {% endif %}
         <span>
           <small>Premiação</small>
@@ -93,7 +93,7 @@
                    data-slide-index="0" data-slide-kind="opening">
             <div class="award-slide-hero">
               {% if theme.show_logo %}
-                <img class="award-hero-logo" src="/static/img/logo.svg" alt="" width="110" height="110">
+                <img class="award-hero-logo" src="/static/img/logo.png" alt="" width="110" height="110">
               {% endif %}
               <p class="awards-eyebrow">{{ event.name }}</p>
               <h1>{{ settings.opening_title }}</h1>
@@ -151,7 +151,7 @@
                    data-slide-index="{{ groups|length + 1 }}" data-slide-kind="closing">
             <div class="award-slide-hero">
               {% if theme.show_logo %}
-                <img class="award-hero-logo" src="/static/img/logo.svg" alt="" width="110" height="110">
+                <img class="award-hero-logo" src="/static/img/logo.png" alt="" width="110" height="110">
               {% endif %}
               <p class="awards-eyebrow">{{ event.name }}</p>
               <h1>{{ settings.closing_title }}</h1>

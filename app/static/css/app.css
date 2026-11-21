@@ -167,8 +167,10 @@ button, a {
 
 .brand small {
   display: block;
+  max-width: 22ch;
   color: var(--muted);
   font-size: 0.7rem;
+  line-height: 1.25;
   letter-spacing: 0.025em;
 }
 
@@ -1675,7 +1677,7 @@ input::placeholder {
   background: var(--danger);
 }
 
-@media (max-width: 1050px) {
+@media (max-width: 1260px) {
   .topbar-inner {
     flex-wrap: wrap;
     padding: 0.65rem 0;
@@ -1697,7 +1699,9 @@ input::placeholder {
   .nav-events {
     margin-left: auto;
   }
+}
 
+@media (max-width: 1050px) {
   .builder-toolbar {
     grid-template-columns: 1fr;
   }

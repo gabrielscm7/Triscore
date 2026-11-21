@@ -11,9 +11,9 @@ cat > "$TARGET" <<EOF
 Type=Application
 Version=1.0
 Name=Triscore
-Comment=Resultados de triatlo offline
+Comment=Gestão de Tempos e Classificação Esportiva
 Exec=$APP_DIR/TriScore.sh
-Icon=$APP_DIR/app/static/img/logo.svg
+Icon=$APP_DIR/app/static/img/logo.png
 Path=$APP_DIR
 Terminal=true
 Categories=Office;Sports;

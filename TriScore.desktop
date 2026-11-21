@@ -2,9 +2,9 @@
 Type=Application
 Version=1.0
 Name=Triscore
-Comment=Resultados de triatlo offline
+Comment=Gestão de Tempos e Classificação Esportiva
 Exec=sh -c 'cd "$(dirname "$1")" && exec ./TriScore.sh' sh %k
-Icon=app/static/img/logo.svg
+Icon=app/static/img/logo.png
 Path=.
 Terminal=true
 Categories=Office;Sports;
