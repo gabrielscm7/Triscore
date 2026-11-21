@@ -2,6 +2,10 @@
 set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if ! command -v setsid >/dev/null 2>&1; then
+  echo "ERRO: setsid nao encontrado. Instale o pacote util-linux." >&2
+  exit 1
+fi
 DESKTOP_DIR="${1:-$HOME/Desktop}"
 TARGET="$DESKTOP_DIR/Triscore.desktop"
 
@@ -12,10 +16,10 @@ Type=Application
 Version=1.0
 Name=Triscore
 Comment=Gestão de Tempos e Classificação Esportiva
-Exec=$APP_DIR/TriScore.sh
+Exec=setsid "$APP_DIR/TriScore.sh"
 Icon=$APP_DIR/app/static/img/logo.png
 Path=$APP_DIR
-Terminal=true
+Terminal=false
 Categories=Office;Sports;
 StartupNotify=true
 EOF

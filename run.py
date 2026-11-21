@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import logging
 import os
+import signal
 import socket
 import sys
 import threading
@@ -168,6 +169,12 @@ def _run_server(
         server.should_exit = True
 
     app.state.shutdown_handler = request_shutdown
+
+    if hasattr(signal, "SIGHUP"):
+        def request_shutdown_from_hangup(_signum, _frame) -> None:
+            server.should_exit = True
+
+        signal.signal(signal.SIGHUP, request_shutdown_from_hangup)
 
     stop_browser = threading.Event()
     if open_browser:

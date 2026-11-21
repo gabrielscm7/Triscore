@@ -46,8 +46,10 @@ O launcher também detecta a ausência do Python e mostra essa instrução.
 - A porta padrão é 8000; se estiver ocupada, o launcher escolhe outra.
 - O navegador abre após o health check.
 - Logs ficam em `dados/logs/`.
-- O botão **Encerrar** ou `Ctrl+C` cria automaticamente um backup do banco em
-  `dados/backups/`.
+- O botão **Encerrar**, o `Ctrl+C` e o fechamento do terminal (`SIGHUP`) criam
+  automaticamente um backup do banco em `dados/backups/`.
+- Pelo atalho da área de trabalho, o servidor fica desacoplado do terminal.
+  Feche-o pelo botão **Encerrar**; fechar o navegador não encerra o servidor.
 
 ## Dados
 

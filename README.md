@@ -74,11 +74,17 @@ sudo ./instalar_debs.sh
 ### Instalação a partir do código-fonte
 
 ```bash
+sudo apt install -y python3.12 python3.12-venv
 cd Triscore
-python3.12 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
 ./TriScore.sh
 ```
+
+O clone não inclui `wheels/`. Na primeira execução, o launcher cria `.venv.tmp`,
+instala `requirements.txt` pelo índice do pip, valida os imports de `uvicorn`,
+`fastapi`, `jinja2`, `multipart`, `reportlab` e `PIL` e só então ativa o ambiente
+como `.venv`. Se a instalação ou a validação falhar, o temporário é removido e
+nenhum `.venv` parcial é mantido. Para uso offline, utilize o pacote portátil com
+`wheels/`.
 
 ## Pasta de dados externa
 
@@ -126,7 +132,7 @@ Com o ambiente virtual ativo:
 ./TriScore.sh
 ```
 
-O launcher inicia o servidor somente em `127.0.0.1`, escolhe outra porta se a 8000 estiver ocupada, aguarda o health check e abre o navegador. Os logs ficam em `dados/logs/`. O botão **Encerrar** na interface e o `Ctrl+C` encerram o servidor e criam um backup automático do banco.
+O launcher inicia o servidor somente em `127.0.0.1`, escolhe outra porta se a 8000 estiver ocupada, aguarda o health check e abre o navegador. Os logs ficam em `dados/logs/`. O botão **Encerrar**, o `Ctrl+C` e o fechamento do terminal (`SIGHUP`) encerram o servidor e criam um backup automático do banco. Pelo atalho, o servidor roda desacoplado do terminal; feche-o pelo botão **Encerrar**.
 
 Se o banco estiver vazio ou tiver sido apagado, recrie a demonstração com:
 
@@ -544,7 +550,7 @@ pip install -r requirements-dev.txt
 pytest -q
 ```
 
-A suíte cobre cadastro de provas, atletas, equipes e categorias; unicidade por prova; equipe opcional e filtro por equipe; validações; importação e relatório CSV com criação automática e rollback transacional; migrações v1 → v2 → v3 → v4 → v5 → v6 com preservação de dados; divisão de baterias, grupos mistos, movimentação, reordenação, cronograma e exclusões com reorganização; parsing e formatação de tempos, lançamento e edição de resultados, status especiais, resumo da súmula e backups automáticos; classificação por categoria, pódio separado ou misto, ordem de status, empate real, aviso de empate no pódio e os quatro critérios de desempate; geração dos PDFs, nomes de arquivo, A4, logo da capa e repetição de cabeçalhos; premiação com empates, categorias sem pódio, temas persistidos, validação de contraste, layouts, banner, fundo, fonte, textos editáveis, abertura/encerramento, PDF de plano B, uploads válidos/inválidos, substituição, remoção e persistência dos arquivos; o seed descartável de resultados; a auditoria offline; a separação dos ambientes real/teste; o backup manual; e o smoke test do fluxo completo com bloqueio de rede externa.
+A suíte cobre cadastro de provas, atletas, equipes e categorias; unicidade por prova; equipe opcional e filtro por equipe; validações; importação e relatório CSV com criação automática e rollback transacional; migrações v1 → v2 → v3 → v4 → v5 → v6 com preservação de dados; divisão de baterias, grupos mistos, movimentação, reordenação, cronograma e exclusões com reorganização; parsing e formatação de tempos, lançamento e edição de resultados, status especiais, resumo da súmula e backups automáticos; classificação por categoria, pódio separado ou misto, ordem de status, empate real, aviso de empate no pódio e os quatro critérios de desempate; geração dos PDFs, nomes de arquivo, A4, logo da capa e repetição de cabeçalhos; premiação com empates, categorias sem pódio, temas persistidos, validação de contraste, layouts, banner, fundo, fonte, textos editáveis, abertura/encerramento, PDF de plano B, uploads válidos/inválidos, substituição, remoção e persistência dos arquivos; o seed descartável de resultados; a auditoria offline; a separação dos ambientes real/teste; o backup manual; o launcher, incluindo criação atômica do `.venv`, falhas sem ambiente parcial e encerramento por `SIGHUP`; e o smoke test do fluxo completo com bloqueio de rede externa.
 
 ## Estrutura
 
@@ -592,13 +598,16 @@ chmod +x ~/Desktop/Triscore.desktop
 gio set ~/Desktop/Triscore.desktop metadata::trusted true
 ```
 
+O atalho usa `setsid` e `Terminal=false`: o servidor fica desacoplado do
+terminal e deve ser encerrado pelo botão **Encerrar** na interface.
+
 ## Solução de problemas
 
 | Sintoma | Ação |
 |---|---|
 | `Python 3.12 nao encontrado` | `sudo ./instalar_debs.sh` |
 | `Modulo venv ausente` | `sudo ./instalar_debs.sh` e rode `./TriScore.sh` novamente |
-| `.venv` inválido ou Python diferente de 3.12 | Apague apenas `.venv/` e rode o launcher; ele recria a partir de `wheels/` |
+| `.venv` incompleto ou inválido | Rode `./TriScore.sh`; ele valida os imports e recria pelo índice do pip ou por `wheels/`, ativando o novo ambiente só após validar |
 | Porta ocupada | O launcher escolhe 8001–8099 automaticamente; se necessário, `--port 8123` |
 | Navegador não abre | Acesse a URL mostrada no terminal e no log |
 | Atalho não abre | Marque como confiável no GNOME (seção acima) |
