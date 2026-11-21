@@ -9,6 +9,7 @@ from html import escape
 from io import BytesIO
 from pathlib import Path
 from typing import Any
+from xml.sax.saxutils import escape as xml_escape
 
 from PIL import Image as PILImage
 from PIL import ImageOps
@@ -169,6 +170,17 @@ def _styles() -> dict[str, ParagraphStyle]:
     }
 
 
+def _cell(text: Any, style: str = "cell", align: str = "LEFT") -> Paragraph:
+    paragraph_style = ParagraphStyle(
+        f"{style}_{align.lower()}",
+        parent=_styles()[style],
+        alignment=TA_CENTER if align == "CENTER" else TA_LEFT,
+        splitLongWords=True,
+    )
+    value = "" if text is None else str(text)
+    return Paragraph(xml_escape(value), paragraph_style)
+
+
 def _slug(value: str) -> str:
     normalized = unicodedata.normalize("NFKD", value or "")
     ascii_text = normalized.encode("ascii", "ignore").decode("ascii").casefold()
@@ -214,8 +226,18 @@ def _table(
     align: list[str] | None = None,
     header_background: colors.Color = SURFACE,
     header_text: colors.Color = TEAL_DARK,
+    min_row_height: float | None = None,
 ) -> Table:
-    table = Table(data, colWidths=widths, repeatRows=1, hAlign="LEFT")
+    table_options: dict[str, Any] = {
+        "colWidths": widths,
+        "repeatRows": 1,
+        "splitByRow": 1,
+        "splitInRow": 0,
+        "hAlign": "LEFT",
+    }
+    if min_row_height is not None:
+        table_options["minRowHeights"] = [0] + [min_row_height] * (len(data) - 1)
+    table = Table(data, **table_options)
     commands = [
         ("BACKGROUND", (0, 0), (-1, 0), header_background),
         ("TEXTCOLOR", (0, 0), (-1, 0), header_text),
@@ -273,9 +295,9 @@ def _build_pdf(
 
 def cronograma_table_data(
     connection: sqlite3.Connection, event: dict[str, Any]
-) -> list[list[str]]:
+) -> list[list[Any]]:
     builder = heat_service.load_builder(connection, event)
-    rows: list[list[str]] = [
+    rows: list[list[Any]] = [
         [
             "Ordem",
             "Bateria",
@@ -292,9 +314,9 @@ def cronograma_table_data(
         rows.append(
             [
                 str(heat["sequence"]),
-                heat["label"],
-                heat["category_name"],
-                mode_label(heat["sex_mode"]),
+                _cell(heat["label"], align="CENTER"),
+                _cell(heat["category_name"]),
+                _cell(mode_label(heat["sex_mode"])),
                 str(len(entries)),
                 heat.get("scheduled_start") or "—",
                 last_start or "—",
@@ -389,14 +411,14 @@ def export_start_list(
             heading += f" · início {section['scheduled_start']}"
         story.append(Paragraph(escape(heading), styles["heading"]))
         if section["entries"]:
-            data: list[list[str]] = [["Pos.", "Peito", "Nome", "Equipe", "Tempo"]]
+            data: list[list[Any]] = [["Pos.", "Peito", "Nome", "Equipe", "Tempo"]]
             for entry in section["entries"]:
                 data.append(
                     [
                         str(entry["position"]),
                         str(entry["bib"]),
-                        entry["name"],
-                        entry.get("team") or "Sem equipe",
+                        _cell(entry["name"]),
+                        _cell(entry.get("team") or "Sem equipe"),
                         "",
                     ]
                 )
@@ -405,6 +427,7 @@ def export_start_list(
                     data,
                     [13 * mm, 16 * mm, 67 * mm, 47 * mm, 32 * mm],
                     align=["CENTER", "CENTER", "LEFT", "LEFT", "CENTER"],
+                    min_row_height=9 * mm,
                 )
             )
         else:
@@ -527,7 +550,7 @@ def export_final_report(
                     ]
                 )
             )
-            data: list[list[str]] = [
+            data: list[list[Any]] = [
                 ["Pos.", "Peito", "Nome", "Equipe", "Tempo", "Status"]
             ]
             for athlete in group["athletes"]:
@@ -535,8 +558,8 @@ def export_final_report(
                     [
                         str(athlete["position"]) if athlete["position"] else "—",
                         str(athlete["bib"]),
-                        athlete["name"],
-                        athlete.get("team") or "Sem equipe",
+                        _cell(athlete["name"]),
+                        _cell(athlete.get("team") or "Sem equipe"),
                         athlete["formatted_time"] if athlete["result_status"] == "OK" else "—",
                         athlete["result_status"] or "Sem resultado",
                     ]
@@ -736,8 +759,8 @@ def export_awards(
                     [
                         position_cell,
                         str(athlete["bib"]),
-                        athlete["name"],
-                        athlete.get("team") or "Sem equipe",
+                        _cell(athlete["name"]),
+                        _cell(athlete.get("team") or "Sem equipe"),
                         athlete["formatted_time"],
                     ]
                 )
